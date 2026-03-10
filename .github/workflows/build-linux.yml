@@ -3,12 +3,30 @@
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*"
   workflow_dispatch:
 
 jobs:
+  create_release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
   linux:
     runs-on: ${{ matrix.os }}
+    needs: create_release
     strategy:
       matrix:
         os:
@@ -44,6 +62,12 @@ jobs:
 
       - name: Package deb
         run: |
+          TAG_VERSION="${GITHUB_REF_NAME#refs/tags/v}"
+          if grep -q '^Version:' package/linux/control; then
+            sed -i "/^Version:/c Version: $TAG_VERSION" package/linux/control
+          else
+            sed -i "/^Package:/a Version: $TAG_VERSION" package/linux/control
+          fi
           if grep -q '^Depends:' package/linux/control; then
             sed -i "/^Depends:/c Depends: ${{ env.DEPENDS }}" package/linux/control
           else
@@ -58,7 +82,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: screenshot-${{ matrix.os }}.deb
           asset_name: screenshot-${{ matrix.os }}.deb
           asset_content_type: application/vnd.debian.binary-package
@@ -70,19 +94,3 @@ jobs:
           name: screenshot-${{ github.job }}-${{ matrix.os }}
           path: screenshot-${{ matrix.os }}.deb
 
-  create_release:
-    name: Create Release
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    needs: linux
-    steps:
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
