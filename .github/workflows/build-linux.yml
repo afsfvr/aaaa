@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Build
         run: |
-          cat "aaaa" >test_file
+          echo "aaaa" >test_file
 
       - name: Create Release and Upload Release Asset
         id: create_release
