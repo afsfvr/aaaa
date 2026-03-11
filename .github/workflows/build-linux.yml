@@ -49,8 +49,10 @@ jobs:
           echo "Depends: $DEPENDS"
 
       - name: Package deb
-        shell: bash
         run: |
+          echo "${{ env.VERSION }}"
+          echo "${{env.VERSION}}"
+          echo "${ env.VERSION }"
           TAG_VERSION="${env.VERSION#[vV]}"
           if grep -q '^Version:' package/linux/control; then
             sed -i "/^Version:/c Version: $TAG_VERSION" package/linux/control
