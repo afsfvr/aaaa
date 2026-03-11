@@ -49,6 +49,7 @@ jobs:
           echo "Depends: $DEPENDS"
 
       - name: Package deb
+        shell: bash
         run: |
           TAG_VERSION="${env.VERSION#[vV]}"
           if grep -q '^Version:' package/linux/control; then
