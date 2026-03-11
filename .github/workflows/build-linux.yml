@@ -50,7 +50,7 @@ jobs:
 
       - name: Package deb
         run: |
-          TAG_VERSION=${${{ env.VERSION }}#[vV]}
+          TAG_VERSION=$(echo "${{ env.VERSION }}" | sed 's/^[vV]//')
           if grep -q '^Version:' package/linux/control; then
             sed -i "/^Version:/c Version: $TAG_VERSION" package/linux/control
           else
